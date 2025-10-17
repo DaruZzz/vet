@@ -1,0 +1,185 @@
+### Sprint 1 - Veterinary Clinic API Calls
+
+### UC 1.7 - Manage Veterinarian Availability
+
+# Get veterinarian availabilities
+GET http://localhost:8080/api/veterinarians/1/availabilities
+
+###
+# Add new availability
+POST http://localhost:8080/api/veterinarians/1/availabilities
+Content-Type: application/json
+
+{
+  "dayOfWeek": "SATURDAY",
+  "startTime": "10:00:00",
+  "endTime": "15:00:00",
+  "initialDate": "2024-01-01",
+  "finalDate": "2024-12-31"
+}
+
+###
+# Update availability
+PUT http://localhost:8080/api/veterinarians/1/availabilities/1
+Content-Type: application/json
+
+{
+  "dayOfWeek": "MONDAY",
+  "startTime": "08:00:00",
+  "endTime": "13:00:00",
+  "initialDate": "2024-01-01",
+  "finalDate": "2024-12-31"
+}
+
+###
+# Delete availability
+DELETE http://localhost:8080/api/veterinarians/1/availabilities/1
+
+###
+# Add availability exception
+POST http://localhost:8080/api/veterinarians/1/availabilities/1/exceptions
+Content-Type: application/json
+
+{
+  "exceptionDate": "2024-08-15",
+  "startTime": null,
+  "endTime": null,
+  "reason": "Summer holidays"
+}
+
+### UC 2.9 - Add Medication Batch
+
+# Add new medication batch
+POST http://localhost:8080/api/medications/batches
+Content-Type: application/json
+
+{
+  "medicationId": 1,
+  "lotNumber": "AMOX-2024-TEST",
+  "receivedDate": "2024-10-01",
+  "expiryDate": "2026-10-01",
+  "initialQuantity": 150,
+  "purchasePricePerUnit": 1.40,
+  "storageLocation": "Shelf A3"
+}
+
+###
+# Get medication batch
+GET http://localhost:8080/api/medications/batches/1
+
+### UC 2.10 - Receive Low Stock Alert
+
+# Get low stock medications
+GET http://localhost:8080/api/medications/low-stock
+
+### UC 3.8 - Configure Promotions & Discounts
+
+# Get all promotions
+GET http://localhost:8080/api/promotions
+
+###
+# Get specific promotion
+GET http://localhost:8080/api/promotions/1
+
+###
+# Create new promotion
+POST http://localhost:8080/api/promotions
+Content-Type: application/json
+
+{
+  "name": "Spring Special",
+  "description": "Spring seasonal promotion",
+  "discountCode": "SPRING2024",
+  "startDate": "2024-03-01",
+  "endDate": "2024-05-31"
+}
+
+###
+# Update promotion
+PUT http://localhost:8080/api/promotions/1
+Content-Type: application/json
+
+{
+  "name": "Summer Wellness Updated",
+  "description": "Updated summer wellness check promotion",
+  "discountCode": "SUMMER2024",
+  "startDate": "2024-06-01",
+  "endDate": "2024-09-30"
+}
+
+###
+# Delete promotion
+DELETE http://localhost:8080/api/promotions/1
+
+###
+# Add discount to promotion
+POST http://localhost:8080/api/promotions/1/discounts
+Content-Type: application/json
+
+{
+  "code": "SPRING15",
+  "type": "PERCENTAGE",
+  "value": 15.0,
+  "startDate": "2024-03-01",
+  "endDate": "2024-05-31",
+  "maxUses": 50
+}
+
+###
+# Get discount
+GET http://localhost:8080/api/discounts/1
+
+###
+# Update discount
+PUT http://localhost:8080/api/discounts/1
+Content-Type: application/json
+
+{
+  "code": "SUMMER2024",
+  "type": "PERCENTAGE",
+  "value": 25.0,
+  "startDate": "2024-06-01",
+  "endDate": "2024-09-30",
+  "maxUses": 150
+}
+
+###
+# Delete discount
+DELETE http://localhost:8080/api/discounts/1
+
+### UC 3.9 - Define Loyalty Tiers
+
+# Get all loyalty tiers
+GET http://localhost:8080/api/loyalty-tiers
+
+###
+# Get specific loyalty tier
+GET http://localhost:8080/api/loyalty-tiers/1
+
+###
+# Create new loyalty tier
+POST http://localhost:8080/api/loyalty-tiers
+Content-Type: application/json
+
+{
+  "tierName": "Platinum",
+  "requiredPoints": 500,
+  "discountPercentage": 20.0,
+  "benefitsDescription": "Premium tier with 20% discount, free annual checkups and priority emergency care"
+}
+
+###
+# Update loyalty tier
+PUT http://localhost:8080/api/loyalty-tiers/1
+Content-Type: application/json
+
+{
+  "tierName": "Bronze",
+  "requiredPoints": 0,
+  "discountPercentage": 7.0,
+  "benefitsDescription": "Entry level - 7% discount on services"
+}
+
+###
+# Delete loyalty tier
+DELETE http://localhost:8080/api/loyalty-tiers/1
