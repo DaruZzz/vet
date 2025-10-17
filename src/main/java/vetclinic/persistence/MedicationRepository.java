@@ -21,7 +21,7 @@ public interface MedicationRepository extends CrudRepository<Medication, Long> {
     Optional<Medication> findByIdWithBatches(Long id);
 
     @Query("""
-        SELECT new application.outputDTO.LowStockMedicationDTO(
+        SELECT new vetclinic.application.outputDTO.LowStockMedicationDTO(
             m.medicationId, 
             m.name, 
             SUM(b.currentQuantity), 
