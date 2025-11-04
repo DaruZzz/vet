@@ -40,7 +40,7 @@ INSERT INTO promotion (name, description, discount_code, start_date, end_date) V
     ('Test Promo 1', 'Test promotion', 'TEST2024', '2024-01-01', '2024-12-31');
 
 -- Insert Discounts
-INSERT INTO discount (code, type, value, start_date, end_date, max_uses, uses_count, promotion_id, loyalty_tier_id) VALUES
+INSERT INTO discount (code, type, discount_value, start_date, end_date, max_uses, uses_count, promotion_id, loyalty_tier_id) VALUES
     ('TEST2024', 'PERCENTAGE', 10.0, '2024-01-01', '2024-12-31', 100, 0, 1, NULL);
 
 -- Insert Availabilities

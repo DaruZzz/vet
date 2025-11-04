@@ -13,14 +13,10 @@ import vetclinic.persistence.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Integration test for the Veterinary Clinic Application
- * Tests that the Spring Boot application context loads correctly
- * and all necessary beans are available
- */
-@SpringBootTest
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @Sql(scripts = "classpath:data.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 class VetClinicApplicationTests {
+
 
     @Autowired
     private ApplicationContext applicationContext;

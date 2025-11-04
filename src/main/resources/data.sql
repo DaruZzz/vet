@@ -50,18 +50,15 @@ INSERT INTO promotion (name, description, discount_code, start_date, end_date) V
                                                                                    ('Winter Vaccination', 'Winter vaccination campaign', 'WINTER2024', '2024-12-01', '2025-03-31');
 
 -- Insert Discounts for Promotions
-INSERT INTO discount (code, type, value, start_date, end_date, max_uses, uses_count, promotion_id, loyalty_tier_id) VALUES
-                                                                                                                        ('SUMMER2024', 'PERCENTAGE', 20.0, '2024-06-01', '2024-09-30', 100, 15, 1, NULL),
-                                                                                                                        ('WINTER2024', 'PERCENTAGE', 15.0, '2024-12-01', '2025-03-31', 150, 5, 2, NULL),
-                                                                                                                        ('FIRSTVISIT', 'FIXED_AMOUNT', 25.0, '2024-01-01', '2025-12-31', NULL, 50, NULL, NULL);
-
+INSERT INTO discount (code, type, discount_value, start_date, end_date, max_uses, uses_count, promotion_id, loyalty_tier_id) VALUES
+                                                                                                                                 ('SUMMER2024', 'PERCENTAGE', 20.0, '2024-06-01', '2024-09-30', 100, 15, 1, NULL),
+                                                                                                                                 ('WINTER2024', 'PERCENTAGE', 15.0, '2024-12-01', '2025-03-31', 150, 5, 2, NULL),
+                                                                                                                                 ('FIRSTVISIT', 'FIXED_AMOUNT', 25.0, '2024-01-01', '2025-12-31', NULL, 50, NULL, NULL);
 -- Insert Discounts for Loyalty Tiers
-INSERT INTO discount (code, type, value, start_date, end_date, max_uses, uses_count, promotion_id, loyalty_tier_id) VALUES
-                                                                                                                        ('BRONZE_TIER', 'LOYALTY_TIER', 5.0, '2024-01-01', '2025-12-31', NULL, 0, NULL, 1),
-                                                                                                                        ('SILVER_TIER', 'LOYALTY_TIER', 10.0, '2024-01-01', '2025-12-31', NULL, 0, NULL, 2),
-                                                                                                                        ('GOLD_TIER', 'LOYALTY_TIER', 15.0, '2024-01-01', '2025-12-31', NULL, 0, NULL, 3);
-
--- Insert Availabilities for Veterinarians
+INSERT INTO discount (code, type, discount_value, start_date, end_date, max_uses, uses_count, promotion_id, loyalty_tier_id) VALUES
+                                                                                                                                 ('BRONZE_TIER', 'LOYALTY_TIER', 5.0, '2024-01-01', '2025-12-31', NULL, 0, NULL, 1),
+                                                                                                                                 ('SILVER_TIER', 'LOYALTY_TIER', 10.0, '2024-01-01', '2025-12-31', NULL, 0, NULL, 2),
+                                                                                                                                 ('GOLD_TIER', 'LOYALTY_TIER', 15.0, '2024-01-01', '2025-12-31', NULL, 0, NULL, 3);-- Insert Availabilities for Veterinarians
 INSERT INTO availability (veterinarian_id, day_of_week, start_time, end_time, initial_date, final_date) VALUES
                                                                                                             (1, 'MONDAY', '09:00:00', '14:00:00', '2024-01-01', '2024-12-31'),
                                                                                                             (1, 'TUESDAY', '09:00:00', '14:00:00', '2024-01-01', '2024-12-31'),

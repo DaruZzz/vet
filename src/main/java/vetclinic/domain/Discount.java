@@ -18,7 +18,9 @@ public class Discount {
     @Enumerated(EnumType.STRING)
     private DiscountType type;
 
+    @Column(name = "discount_value")  // ← CAMBIO: Renombrar columna
     private Double value; // Percentage or fixed amount
+
     private LocalDate startDate;
     private LocalDate endDate;
     private Integer maxUses;
