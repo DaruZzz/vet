@@ -35,7 +35,71 @@ public class InvoiceService {
         this.medicationBatchRepository = medicationBatchRepository;
         this.loyaltyTierRepository = loyaltyTierRepository;
     }
+    @Transactional
+    public Long generateInvoiceFromVisit(Long visitId) {
+        Visit visit = visitRepository.findByIdWithDetails(visitId)
+                .orElseThrow(() -> new VisitNotFoundException(
+                        "Visit with id " + visitId + " not found"
+                ));
 
+        if (visit.getStatus() != VisitStatus.COMPLETED) {
+            throw new IllegalStateException("Can only generate invoice for completed visits");
+        }
+
+        if (visit.getInvoice() != null) {
+            throw new IllegalStateException("Invoice already exists for this visit");
+        }
+
+        Invoice invoice = new Invoice();
+        invoice.setInvoiceDate(LocalDate.now());
+        invoice.setPetOwner(visit.getPetOwner());
+        invoice.setVisit(visit);
+
+        // Add visit consultation fee
+        InvoiceItem visitItem = new InvoiceItem();
+        visitItem.setDescription("Consultation - " + visit.getReasonForVisit());
+        visitItem.setQuantity(visit.getDuration() / 15); // Number of 15-min blocks
+        visitItem.setUnitPrice(visit.getPricePerBlock());
+        visitItem.setItemType(InvoiceItemType.VISIT);
+        visitItem.setReferenceId(visit.getVisitId());
+        visitItem.calculateTotal();
+        invoice.addItem(visitItem);
+
+        // Add treatments
+        for (Treatment treatment : visit.getTreatments()) {
+            InvoiceItem treatmentItem = new InvoiceItem();
+            treatmentItem.setDescription(treatment.getName());
+            treatmentItem.setQuantity(1);
+            treatmentItem.setUnitPrice(treatment.getCost());
+            treatmentItem.setItemType(InvoiceItemType.TREATMENT);
+            treatmentItem.setReferenceId(treatment.getTreatmentId());
+            treatmentItem.calculateTotal();
+            invoice.addItem(treatmentItem);
+        }
+
+        // Add medications
+        for (MedicationPrescription prescription : visit.getMedicationPrescriptions()) {
+            InvoiceItem medItem = new InvoiceItem();
+            medItem.setDescription(prescription.getMedication().getName());
+            medItem.setQuantity(prescription.getQuantityPrescribed());
+            medItem.setUnitPrice(prescription.getMedication().getUnitPrice());
+            medItem.setItemType(InvoiceItemType.MEDICATION);
+            medItem.setReferenceId(prescription.getMedication().getMedicationId());
+            medItem.calculateTotal();
+            invoice.addItem(medItem);
+        }
+
+        // Apply loyalty tier discount if applicable
+        PetOwner petOwner = visit.getPetOwner();
+        if (petOwner.getLoyaltyTier() != null) {
+            invoice.applyLoyaltyTierDiscount(
+                    petOwner.getLoyaltyTier().getDiscountPercentage()
+            );
+        }
+
+        Invoice saved = invoiceRepository.save(invoice);
+        return saved.getInvoiceId();
+    }
     // UC 3.2: Sell Medication/Products (Non-Visit Sale)
     @Transactional
     public Long sellMedication(SellMedicationCommand command) {

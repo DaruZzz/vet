@@ -7,24 +7,21 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.jdbc.Sql;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
-@Sql(scripts = "classpath:data-test.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
-@Sql(statements = {
-        "DELETE FROM discount",
-        "DELETE FROM loyalty_tier",
-        "ALTER TABLE loyalty_tier ALTER COLUMN tier_id RESTART WITH 1"
-}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+@Transactional
 public class LoyaltyTierServiceTest {
 
     @Autowired
     private LoyaltyTierService loyaltyTierService;
 
     @Test
+    @Sql(scripts = "classpath:data-test.sql")
     public void testCreateLoyaltyTier() {
         LoyaltyTierCommand command = new LoyaltyTierCommand(
                 "Platinum",
@@ -44,10 +41,11 @@ public class LoyaltyTierServiceTest {
     }
 
     @Test
+    @Sql(scripts = "classpath:data-test.sql")
     public void testGetAllLoyaltyTiers() {
         List<LoyaltyTierInformation> tiers = loyaltyTierService.getAllLoyaltyTiers();
 
         assertNotNull(tiers);
-        assertTrue(tiers.size() >= 3); // Bronze, Silver, Gold from data.sql
+        assertEquals(3, tiers.size()); // Bronze, Silver, Gold from data-test.sql
     }
 }

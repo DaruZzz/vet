@@ -18,8 +18,8 @@ public class Discount {
     @Enumerated(EnumType.STRING)
     private DiscountType type;
 
-    @Column(name = "discount_value")  // ← CAMBIO: Renombrar columna
-    private Double value; // Percentage or fixed amount
+    @Column(name = "discount_value")  // ← Asegúrate que coincida con data.sql y data-test.sql
+    private Double value;
 
     private LocalDate startDate;
     private LocalDate endDate;

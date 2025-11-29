@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
-import org.springframework.test.context.jdbc.Sql;
+import org.springframework.transaction.annotation.Transactional;
 import vetclinic.application.DiscountService;
 import vetclinic.application.LoyaltyTierService;
 import vetclinic.application.MedicationService;
@@ -14,9 +14,8 @@ import vetclinic.persistence.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
-@Sql(scripts = "classpath:data.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+@Transactional
 class VetClinicApplicationTests {
-
 
     @Autowired
     private ApplicationContext applicationContext;
@@ -84,8 +83,6 @@ class VetClinicApplicationTests {
 
     @Test
     void testDatabaseIsPopulated() {
-        // Test that data.sql has populated the database correctly
-
         // Check veterinarians
         long vetCount = veterinarianRepository.count();
         assertTrue(vetCount >= 2, "Should have at least 2 veterinarians from data.sql");
@@ -117,7 +114,6 @@ class VetClinicApplicationTests {
 
     @Test
     void testVeterinarianServiceIntegration() {
-        // Test that we can retrieve veterinarian availabilities
         var availabilities = veterinarianService.getVeterinarianAvailabilities(1L);
         assertNotNull(availabilities, "Should be able to retrieve veterinarian availabilities");
         assertFalse(availabilities.isEmpty(), "Veterinarian 1 should have availabilities");
@@ -125,15 +121,12 @@ class VetClinicApplicationTests {
 
     @Test
     void testMedicationServiceIntegration() {
-        // Test that we can retrieve low stock medications
         var lowStockMeds = medicationService.getLowStockMedications();
         assertNotNull(lowStockMeds, "Should be able to retrieve low stock medications");
-        // Note: depending on data.sql, this list might be empty or populated
     }
 
     @Test
     void testLoyaltyTierServiceIntegration() {
-        // Test that we can retrieve loyalty tiers
         var tiers = loyaltyTierService.getAllLoyaltyTiers();
         assertNotNull(tiers, "Should be able to retrieve loyalty tiers");
         assertEquals(3, tiers.size(), "Should have 3 loyalty tiers from data.sql");
@@ -141,7 +134,6 @@ class VetClinicApplicationTests {
 
     @Test
     void testDiscountServiceIntegration() {
-        // Test that we can retrieve promotions
         var promotions = discountService.getAllPromotions();
         assertNotNull(promotions, "Should be able to retrieve promotions");
         assertTrue(promotions.size() >= 2, "Should have at least 2 promotions from data.sql");
@@ -149,7 +141,6 @@ class VetClinicApplicationTests {
 
     @Test
     void testApplicationMainClassExists() {
-        // Verify that the main application class exists
         assertDoesNotThrow(() -> {
             Class<?> mainClass = Class.forName("vetclinic.VetClinicApplication");
             assertNotNull(mainClass, "VetClinicApplication class should exist");

@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.jdbc.Sql;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -15,22 +16,18 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
-@Sql(scripts = "classpath:data-test.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
-@Sql(statements = {
-        "DELETE FROM medication_batch",
-        "DELETE FROM medication",
-        "ALTER TABLE medication ALTER COLUMN medication_id RESTART WITH 1"
-}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+@Transactional
 public class MedicationServiceTest {
 
     @Autowired
     private MedicationService medicationService;
 
     @Test
+    @Sql(scripts = "classpath:data-test.sql")
     public void testAddMedicationBatch() {
         MedicationBatchCommand command = new MedicationBatchCommand(
-                1L,
-                "TEST-2024-001",
+                1L, // Este medication ID existe en data-test.sql
+                "TEST-2024-003",
                 LocalDate.now(),
                 LocalDate.now().plusYears(2),
                 100,
@@ -44,14 +41,16 @@ public class MedicationServiceTest {
 
         MedicationBatchInformation batch = medicationService.getMedicationBatch(batchId);
         assertNotNull(batch);
-        assertEquals("TEST-2024-001", batch.lotNumber());
+        assertEquals("TEST-2024-003", batch.lotNumber());
     }
 
     @Test
+    @Sql(scripts = "classpath:data-test.sql")
     public void testGetLowStockMedications() {
         List<LowStockMedicationDTO> lowStockMeds = medicationService.getLowStockMedications();
 
         assertNotNull(lowStockMeds);
-        // Should have some low stock medications based on data.sql
+        // Los medicamentos en data-test.sql tienen stock bajo
+        assertTrue(lowStockMeds.size() >= 1);
     }
 }
