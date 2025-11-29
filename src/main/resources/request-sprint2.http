@@ -1,0 +1,205 @@
+### Sprint 2 - Veterinary Clinic API Calls
+
+### UC 1.1 - Schedule New Visit
+POST http://localhost:8080/api/visits
+Content-Type: application/json
+
+{
+  "petId": 1,
+  "petOwnerId": 100,
+  "veterinarianId": 1,
+  "dateTime": "2024-11-20T10:00:00",
+  "duration": 15,
+  "reasonForVisit": "Skin irritation checkup"
+}
+
+###
+# Schedule visit with longer duration (30 minutes)
+POST http://localhost:8080/api/visits
+Content-Type: application/json
+
+{
+  "petId": 2,
+  "petOwnerId": 100,
+  "veterinarianId": 1,
+  "dateTime": "2024-11-20T10:30:00",
+  "duration": 30,
+  "reasonForVisit": "Vaccination and general checkup"
+}
+
+### UC 1.2 - View Veterinarian's Schedule
+GET http://localhost:8080/api/schedule/veterinarian/1?date=2024-11-20
+
+###
+# View schedule for different veterinarian
+GET http://localhost:8080/api/schedule/veterinarian/2?date=2024-11-20
+
+### Get Visit Details
+GET http://localhost:8080/api/visits/1
+
+### UC 2.1 - Start Consultation
+POST http://localhost:8080/api/visits/2/start
+
+### UC 2.2 - Record Visit Diagnosis
+POST http://localhost:8080/api/visits/2/diagnosis
+Content-Type: application/json
+
+{
+  "diagnosis": "Mild dermatitis, prescribed anti-inflammatory medication",
+  "notes": "Pet showed signs of scratching. Skin appears slightly inflamed on left flank. Prescribed medication and follow-up in 2 weeks."
+}
+
+### UC 2.3 - Prescribe Medication
+POST http://localhost:8080/api/visits/2/prescriptions
+Content-Type: application/json
+
+{
+  "medicationId": 2,
+  "quantityPrescribed": 10,
+  "dosageInstructions": "1 tablet twice daily with food",
+  "duration": "10 days"
+}
+
+###
+# Prescribe another medication
+POST http://localhost:8080/api/visits/2/prescriptions
+Content-Type: application/json
+
+{
+  "medicationId": 3,
+  "quantityPrescribed": 15,
+  "dosageInstructions": "1 tablet once daily in the morning",
+  "duration": "15 days"
+}
+
+### UC 2.4 - Prescribe Treatment
+POST http://localhost:8080/api/visits/2/treatments
+Content-Type: application/json
+
+{
+  "name": "Topical Skin Treatment",
+  "description": "Application of medicated cream to affected area",
+  "cost": 25.00
+}
+
+###
+# Prescribe another treatment
+POST http://localhost:8080/api/visits/2/treatments
+Content-Type: application/json
+
+{
+  "name": "Blood Test",
+  "description": "Complete blood count to check for underlying conditions",
+  "cost": 45.00
+}
+
+### UC 2.1 - Complete Consultation
+POST http://localhost:8080/api/visits/2/complete
+
+### UC 3.2 - Sell Medication (Non-Visit Sale)
+POST http://localhost:8080/api/invoices/sell-medication
+Content-Type: application/json
+
+{
+  "medicationId": 1,
+  "quantity": 20,
+  "petOwnerId": 100
+}
+
+###
+# Sell medication without pet owner (no loyalty points)
+POST http://localhost:8080/api/invoices/sell-medication
+Content-Type: application/json
+
+{
+  "medicationId": 4,
+  "quantity": 5,
+  "petOwnerId": null
+}
+
+### Get Invoice Details
+GET http://localhost:8080/api/invoices/1
+
+### UC 3.5 - Earn Fidelity Points
+# Note: This would normally be called automatically when payment is processed
+POST http://localhost:8080/api/invoices/1/earn-points
+
+### Complete workflow example:
+### 1. Schedule a visit
+POST http://localhost:8080/api/visits
+Content-Type: application/json
+
+{
+  "petId": 3,
+  "petOwnerId": 101,
+  "veterinarianId": 2,
+  "dateTime": "2024-11-21T16:00:00",
+  "duration": 30,
+  "reasonForVisit": "Follow-up on previous treatment"
+}
+
+### 2. Start the consultation (use the visitId from previous response)
+POST http://localhost:8080/api/visits/4/start
+
+### 3. Record diagnosis
+POST http://localhost:8080/api/visits/4/diagnosis
+Content-Type: application/json
+
+{
+  "diagnosis": "Recovery progressing well, minor adjustment needed",
+  "notes": "Pet shows significant improvement. Continue with reduced medication dosage."
+}
+
+### 4. Prescribe medication
+POST http://localhost:8080/api/visits/4/prescriptions
+Content-Type: application/json
+
+{
+  "medicationId": 1,
+  "quantityPrescribed": 14,
+  "dosageInstructions": "1 tablet once daily",
+  "duration": "14 days"
+}
+
+### 5. Add treatment if needed
+POST http://localhost:8080/api/visits/4/treatments
+Content-Type: application/json
+
+{
+  "name": "Follow-up Consultation",
+  "description": "Standard follow-up visit",
+  "cost": 30.00
+}
+
+### 6. Complete the consultation
+POST http://localhost:8080/api/visits/4/complete
+
+### 7. View the complete visit details
+GET http://localhost:8080/api/visits/4
+
+### Test Loyalty Tier Discount
+# Sell medication to pet owner with Silver tier (should apply 10% discount)
+POST http://localhost:8080/api/invoices/sell-medication
+Content-Type: application/json
+
+{
+  "medicationId": 2,
+  "quantity": 10,
+  "petOwnerId": 101
+}
+
+### Check veterinarian schedule for today
+GET http://localhost:8080/api/schedule/veterinarian/1?date=2024-11-05
+
+### Try to schedule overlapping visits (should fail)
+POST http://localhost:8080/api/visits
+Content-Type: application/json
+
+{
+  "petId": 1,
+  "petOwnerId": 100,
+  "veterinarianId": 1,
+  "dateTime": "2024-11-20T10:00:00",
+  "duration": 15,
+  "reasonForVisit": "This should fail - time slot already taken"
+}

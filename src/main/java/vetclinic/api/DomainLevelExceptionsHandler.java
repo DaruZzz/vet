@@ -5,10 +5,7 @@ import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
-import vetclinic.domain.exceptions.BatchExpiredException;
-import vetclinic.domain.exceptions.DiscountExpiredException;
-import vetclinic.domain.exceptions.DiscountMaxUsesExceededException;
-import vetclinic.domain.exceptions.InsufficientStockException;
+import vetclinic.domain.exceptions.*;
 
 import java.time.Instant;
 
@@ -47,6 +44,24 @@ public class DomainLevelExceptionsHandler {
     public ProblemDetail handleDiscountMaxUsesExceededException(DiscountMaxUsesExceededException ex) {
         ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
         pd.setTitle("Discount Max Uses Exceeded");
+        pd.setProperty("timestamp", Instant.now());
+        return pd;
+    }
+
+    @ExceptionHandler(TimeSlotNotAvailableException.class)
+    @ResponseBody
+    public ProblemDetail handleTimeSlotNotAvailableException(TimeSlotNotAvailableException ex) {
+        ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+        pd.setTitle("Time Slot Not Available");
+        pd.setProperty("timestamp", Instant.now());
+        return pd;
+    }
+
+    @ExceptionHandler(InvalidVisitStatusException.class)
+    @ResponseBody
+    public ProblemDetail handleInvalidVisitStatusException(InvalidVisitStatusException ex) {
+        ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+        pd.setTitle("Invalid Visit Status");
         pd.setProperty("timestamp", Instant.now());
         return pd;
     }

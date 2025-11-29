@@ -65,4 +65,31 @@ public class ApplicationLevelExceptionsHandler {
         pd.setProperty("timestamp", Instant.now());
         return pd;
     }
+
+    @ExceptionHandler(PetOwnerNotFoundException.class)
+    @ResponseBody
+    public ProblemDetail handlePetOwnerNotFoundException(PetOwnerNotFoundException ex) {
+        ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+        pd.setTitle("Pet Owner Not Found");
+        pd.setProperty("timestamp", Instant.now());
+        return pd;
+    }
+
+    @ExceptionHandler(PetNotFoundException.class)
+    @ResponseBody
+    public ProblemDetail handlePetNotFoundException(PetNotFoundException ex) {
+        ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+        pd.setTitle("Pet Not Found");
+        pd.setProperty("timestamp", Instant.now());
+        return pd;
+    }
+
+    @ExceptionHandler(VisitNotFoundException.class)
+    @ResponseBody
+    public ProblemDetail handleVisitNotFoundException(VisitNotFoundException ex) {
+        ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+        pd.setTitle("Visit Not Found");
+        pd.setProperty("timestamp", Instant.now());
+        return pd;
+    }
 }
