@@ -15,7 +15,6 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class VisitService {
@@ -114,6 +113,96 @@ public class VisitService {
         );
     }
 
+    // UC 1.3: Reschedule Visit
+    @Transactional
+    public void rescheduleVisit(Long visitId, RescheduleVisitCommand command) {
+        Visit visit = visitRepository.findById(visitId)
+                .orElseThrow(() -> new VisitNotFoundException(
+                        "Visit with id " + visitId + " not found"
+                ));
+
+        if (visit.getStatus() != VisitStatus.SCHEDULED) {
+            throw new IllegalStateException("Can only reschedule scheduled visits");
+        }
+
+        // Check if new slot is available
+        Integer duration = command.newDuration() != null ? command.newDuration() : visit.getDuration();
+
+        if (!isTimeSlotAvailable(visit.getVeterinarian().getPersonId(),
+                command.newDateTime(), duration)) {
+            throw new TimeSlotNotAvailableException(
+                    "New time slot not available"
+            );
+        }
+
+        visit.setDateTime(command.newDateTime());
+        if (command.newDuration() != null) {
+            visit.setDuration(command.newDuration());
+        }
+
+        visitRepository.save(visit);
+    }
+
+    // UC 1.4: Cancel Scheduled Visit
+    @Transactional
+    public void cancelVisit(Long visitId, String reason) {
+        Visit visit = visitRepository.findById(visitId)
+                .orElseThrow(() -> new VisitNotFoundException(
+                        "Visit with id " + visitId + " not found"
+                ));
+
+        visit.cancel();
+
+        if (reason != null && !reason.isEmpty()) {
+            visit.setNotes("Cancellation reason: " + reason);
+        }
+
+        visitRepository.save(visit);
+    }
+
+    // UC 1.5: Register Walk-in Visit
+    @Transactional
+    public Long registerWalkIn(WalkInVisitCommand command) {
+        Pet pet = petRepository.findById(command.petId())
+                .orElseThrow(() -> new PetNotFoundException(
+                        "Pet with id " + command.petId() + " not found"
+                ));
+
+        PetOwner petOwner = petOwnerRepository.findById(command.petOwnerId())
+                .orElseThrow(() -> new PetOwnerNotFoundException(
+                        "Pet owner with id " + command.petOwnerId() + " not found"
+                ));
+
+        Veterinarian veterinarian = veterinarianRepository.findById(command.veterinarianId())
+                .orElseThrow(() -> new VeterinarianNotFoundException(
+                        "Veterinarian with id " + command.veterinarianId() + " not found"
+                ));
+
+        Visit visit = new Visit();
+        visit.setPet(pet);
+        visit.setPetOwner(petOwner);
+        visit.setVeterinarian(veterinarian);
+        visit.setDateTime(LocalDateTime.now());
+        visit.setDuration(command.duration() != null ? command.duration() : 15);
+        visit.setReasonForVisit(command.reasonForVisit());
+        visit.setStatus(VisitStatus.IN_PROGRESS);
+
+        Visit saved = visitRepository.save(visit);
+        return saved.getVisitId();
+    }
+
+    // UC 1.6: Mark No Show
+    @Transactional
+    public void markNoShow(Long visitId) {
+        Visit visit = visitRepository.findById(visitId)
+                .orElseThrow(() -> new VisitNotFoundException(
+                        "Visit with id " + visitId + " not found"
+                ));
+
+        visit.markNoShow();
+        visitRepository.save(visit);
+    }
+
     // UC 2.1: Start/Complete Visit Consultation
     @Transactional
     public void startConsultation(Long visitId) {
@@ -195,7 +284,7 @@ public class VisitService {
             );
         }
 
-        // Dispense from stock
+        // Dispense from stock (UC 2.8)
         selectedBatch.dispense(command.quantityPrescribed());
 
         MedicationPrescription prescription = new MedicationPrescription();

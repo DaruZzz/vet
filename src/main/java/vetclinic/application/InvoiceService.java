@@ -24,19 +24,22 @@ public class InvoiceService {
     private final MedicationRepository medicationRepository;
     private final MedicationBatchRepository medicationBatchRepository;
     private final LoyaltyTierRepository loyaltyTierRepository;
+    private final DiscountRepository discountRepository;
 
     public InvoiceService(InvoiceRepository invoiceRepository,
                           VisitRepository visitRepository,
                           PetOwnerRepository petOwnerRepository,
                           MedicationRepository medicationRepository,
                           MedicationBatchRepository medicationBatchRepository,
-                          LoyaltyTierRepository loyaltyTierRepository) {
+                          LoyaltyTierRepository loyaltyTierRepository,
+                          DiscountRepository discountRepository) {
         this.invoiceRepository = invoiceRepository;
         this.visitRepository = visitRepository;
         this.petOwnerRepository = petOwnerRepository;
         this.medicationRepository = medicationRepository;
         this.medicationBatchRepository = medicationBatchRepository;
         this.loyaltyTierRepository = loyaltyTierRepository;
+        this.discountRepository = discountRepository;
     }
 
     // UC 3.1: Generate Invoice from Visit
@@ -94,7 +97,7 @@ public class InvoiceService {
             invoice.addItem(medItem);
         }
 
-        // Apply loyalty tier discount if applicable
+        // Apply loyalty tier discount if applicable (UC 3.4)
         PetOwner petOwner = visit.getPetOwner();
         if (petOwner.getLoyaltyTier() != null) {
             invoice.applyLoyaltyTierDiscount(
@@ -172,6 +175,36 @@ public class InvoiceService {
         return saved.getInvoiceId();
     }
 
+    // UC 3.3: Apply Discount to Invoice
+    @Transactional
+    public void applyDiscountToInvoice(Long invoiceId, String discountCode) {
+        Invoice invoice = invoiceRepository.findById(invoiceId)
+                .orElseThrow(() -> new RuntimeException(
+                        "Invoice with id " + invoiceId + " not found"
+                ));
+
+        if (invoice.getStatus() == InvoiceStatus.PAID) {
+            throw new IllegalStateException("Cannot apply discount to paid invoice");
+        }
+
+        Discount discount = discountRepository.findByCode(discountCode)
+                .orElseThrow(() -> new DiscountNotFoundException(
+                        "Discount with code " + discountCode + " not found"
+                ));
+
+        if (!discount.isValid()) {
+            throw new IllegalStateException("Discount is not valid or has expired");
+        }
+
+        Double discountAmount = discount.calculateDiscount(invoice.getTotalAmount());
+        invoice.applyDiscount(discountAmount);
+
+        discount.incrementUsesCount();
+
+        discountRepository.save(discount);
+        invoiceRepository.save(invoice);
+    }
+
     // UC 3.5: Earn Fidelity Points (called when invoice is paid)
     @Transactional
     public void earnFidelityPoints(Long invoiceId) {
@@ -197,6 +230,41 @@ public class InvoiceService {
         updateLoyaltyTier(petOwner);
 
         petOwnerRepository.save(petOwner);
+    }
+
+    // UC 3.7: Redeem Fidelity Points for Discount
+    @Transactional
+    public void redeemPoints(Long invoiceId, Integer pointsToRedeem) {
+        Invoice invoice = invoiceRepository.findById(invoiceId)
+                .orElseThrow(() -> new RuntimeException(
+                        "Invoice with id " + invoiceId + " not found"
+                ));
+
+        if (invoice.getStatus() == InvoiceStatus.PAID) {
+            throw new IllegalStateException("Cannot redeem points on paid invoice");
+        }
+
+        PetOwner petOwner = invoice.getPetOwner();
+        if (petOwner == null) {
+            throw new IllegalStateException("Cannot redeem points without pet owner");
+        }
+
+        if (petOwner.getLoyaltyPoints() < pointsToRedeem) {
+            throw new IllegalArgumentException("Insufficient loyalty points");
+        }
+
+        // Conversion rate: 100 points = 5€ discount
+        Double discountAmount = (pointsToRedeem / 100.0) * 5.0;
+
+        if (discountAmount > invoice.getTotalAmount()) {
+            discountAmount = invoice.getTotalAmount();
+        }
+
+        invoice.applyDiscount(discountAmount);
+        petOwner.deductLoyaltyPoints(pointsToRedeem);
+
+        petOwnerRepository.save(petOwner);
+        invoiceRepository.save(invoice);
     }
 
     public InvoiceInformation getInvoice(Long invoiceId) {

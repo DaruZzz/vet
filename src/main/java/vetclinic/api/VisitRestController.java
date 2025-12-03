@@ -44,6 +44,48 @@ public class VisitRestController {
         return visitService.getVisit(visitId);
     }
 
+    // UC 1.3: Reschedule Visit
+    @PutMapping("/{visitId}/reschedule")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void rescheduleVisit(
+            @PathVariable Long visitId,
+            @RequestBody @Valid RescheduleVisitCommand command) {
+
+        visitService.rescheduleVisit(visitId, command);
+    }
+
+    // UC 1.4: Cancel Scheduled Visit
+    @PostMapping("/{visitId}/cancel")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void cancelVisit(
+            @PathVariable Long visitId,
+            @RequestParam(required = false) String reason) {
+
+        visitService.cancelVisit(visitId, reason);
+    }
+
+    // UC 1.5: Register Walk-in Visit
+    @PostMapping("/walk-in")
+    public ResponseEntity<Void> registerWalkIn(
+            @RequestBody @Valid WalkInVisitCommand command,
+            UriComponentsBuilder uriBuilder) {
+
+        Long visitId = visitService.registerWalkIn(command);
+        var location = uriBuilder
+                .path("/api/visits/{id}")
+                .buildAndExpand(visitId)
+                .toUri();
+
+        return ResponseEntity.created(location).build();
+    }
+
+    // UC 1.6: Mark as No Show
+    @PostMapping("/{visitId}/no-show")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void markNoShow(@PathVariable Long visitId) {
+        visitService.markNoShow(visitId);
+    }
+
     // UC 2.1: Start Consultation
     @PostMapping("/{visitId}/start")
     @ResponseStatus(HttpStatus.NO_CONTENT)
@@ -100,4 +142,3 @@ public class VisitRestController {
         return ResponseEntity.created(location).build();
     }
 }
-

@@ -2,11 +2,14 @@ package vetclinic.api;
 
 import org.springframework.format.annotation.DateTimeFormat;
 import vetclinic.application.InvoiceService;
+import vetclinic.application.inputDTO.ApplyDiscountCommand;
+import vetclinic.application.inputDTO.RedeemPointsCommand;
 import vetclinic.application.inputDTO.SellMedicationCommand;
 import vetclinic.application.outputDTO.DiscountUtilizationDTO;
 import vetclinic.application.outputDTO.InvoiceHistoryDTO;
 import vetclinic.application.outputDTO.InvoiceInformation;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -23,6 +26,7 @@ public class InvoiceRestController {
     public InvoiceRestController(InvoiceService invoiceService) {
         this.invoiceService = invoiceService;
     }
+
     // UC 3.1: Generate Invoice from Visit
     @PostMapping("/from-visit/{visitId}")
     public ResponseEntity<Void> generateInvoiceFromVisit(
@@ -37,6 +41,7 @@ public class InvoiceRestController {
 
         return ResponseEntity.created(location).build();
     }
+
     // UC 3.2: Sell Medication (Non-Visit Sale)
     @PostMapping("/sell-medication")
     public ResponseEntity<Void> sellMedication(
@@ -58,6 +63,16 @@ public class InvoiceRestController {
         return invoiceService.getInvoice(invoiceId);
     }
 
+    // UC 3.3: Apply Discount to Invoice
+    @PostMapping("/{invoiceId}/apply-discount")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void applyDiscount(
+            @PathVariable Long invoiceId,
+            @RequestBody @Valid ApplyDiscountCommand command) {
+
+        invoiceService.applyDiscountToInvoice(invoiceId, command.discountCode());
+    }
+
     // UC 3.5: Trigger earning fidelity points after payment
     @PostMapping("/{invoiceId}/earn-points")
     public ResponseEntity<Void> earnFidelityPoints(@PathVariable Long invoiceId) {
@@ -65,6 +80,17 @@ public class InvoiceRestController {
         return ResponseEntity.ok().build();
     }
 
+    // UC 3.7: Redeem Fidelity Points for Discount
+    @PostMapping("/{invoiceId}/redeem-points")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void redeemPoints(
+            @PathVariable Long invoiceId,
+            @RequestBody @Valid RedeemPointsCommand command) {
+
+        invoiceService.redeemPoints(invoiceId, command.pointsToRedeem());
+    }
+
+    // UC 3.10: View Invoice History
     @GetMapping("/history")
     public List<InvoiceHistoryDTO> getInvoiceHistory(
             @RequestParam(required = false) Long petOwnerId,
@@ -74,6 +100,7 @@ public class InvoiceRestController {
         return invoiceService.getInvoiceHistory(petOwnerId, startDate, endDate);
     }
 
+    // UC 3.12: Analyze Discount Utilization
     @GetMapping("/discount-utilization")
     public List<DiscountUtilizationDTO> analyzeDiscountUtilization(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
