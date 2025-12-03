@@ -1,12 +1,18 @@
 package vetclinic.api;
 
+import org.springframework.format.annotation.DateTimeFormat;
 import vetclinic.application.InvoiceService;
 import vetclinic.application.inputDTO.SellMedicationCommand;
+import vetclinic.application.outputDTO.DiscountUtilizationDTO;
+import vetclinic.application.outputDTO.InvoiceHistoryDTO;
 import vetclinic.application.outputDTO.InvoiceInformation;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
+
+import java.time.LocalDate;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/invoices")
@@ -57,5 +63,22 @@ public class InvoiceRestController {
     public ResponseEntity<Void> earnFidelityPoints(@PathVariable Long invoiceId) {
         invoiceService.earnFidelityPoints(invoiceId);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/history")
+    public List<InvoiceHistoryDTO> getInvoiceHistory(
+            @RequestParam(required = false) Long petOwnerId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+
+        return invoiceService.getInvoiceHistory(petOwnerId, startDate, endDate);
+    }
+
+    @GetMapping("/discount-utilization")
+    public List<DiscountUtilizationDTO> analyzeDiscountUtilization(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+
+        return invoiceService.analyzeDiscountUtilization(startDate, endDate);
     }
 }

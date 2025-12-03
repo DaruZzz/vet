@@ -96,3 +96,100 @@ INSERT INTO pet (name, date_of_birth, gender, breed, color, weight, microchip_id
 INSERT INTO visit (pet_id, pet_owner_id, veterinarian_id, date_time, duration, reason_for_visit, price_per_block, status) VALUES (1, 100, 1, '2024-11-10 10:00:00', 15, 'Annual checkup', 20.0, 'COMPLETED');
 INSERT INTO visit (pet_id, pet_owner_id, veterinarian_id, date_time, duration, reason_for_visit, price_per_block, status) VALUES (2, 100, 1, '2024-11-12 11:00:00', 30, 'Vaccination', 20.0, 'SCHEDULED');
 INSERT INTO visit (pet_id, pet_owner_id, veterinarian_id, date_time, duration, reason_for_visit, price_per_block, status) VALUES (3, 101, 2, '2024-11-15 16:00:00', 15, 'General consultation', 20.0, 'SCHEDULED');
+
+INSERT INTO visit (pet_id, pet_owner_id, veterinarian_id, date_time, duration, reason_for_visit, price_per_block, status, diagnosis, notes)
+VALUES (1, 100, 1, '2024-09-15 09:00:00', 30, 'Vaccination follow-up', 20.0, 'COMPLETED', 'Vaccination successful', 'Pet in good health');
+
+INSERT INTO visit (pet_id, pet_owner_id, veterinarian_id, date_time, duration, reason_for_visit, price_per_block, status, diagnosis, notes)
+VALUES (2, 100, 1, '2024-10-05 10:30:00', 15, 'Skin allergy', 20.0, 'COMPLETED', 'Mild dermatitis', 'Prescribed anti-inflammatory');
+
+INSERT INTO visit (pet_id, pet_owner_id, veterinarian_id, date_time, duration, reason_for_visit, price_per_block, status, diagnosis, notes)
+VALUES (3, 101, 2, '2024-10-20 15:30:00', 30, 'Dental checkup', 20.0, 'COMPLETED', 'Mild tartar buildup', 'Recommended dental cleaning');
+
+INSERT INTO visit (pet_id, pet_owner_id, veterinarian_id, date_time, duration, reason_for_visit, price_per_block, status)
+VALUES (1, 100, 1, '2024-12-01 11:00:00', 15, 'Annual checkup', 20.0, 'SCHEDULED');
+
+INSERT INTO visit (pet_id, pet_owner_id, veterinarian_id, date_time, duration, reason_for_visit, price_per_block, status)
+VALUES (2, 100, 2, '2024-12-05 16:00:00', 15, 'Follow-up', 20.0, 'SCHEDULED');
+
+INSERT INTO visit (pet_id, pet_owner_id, veterinarian_id, date_time, duration, reason_for_visit, price_per_block, status)
+VALUES (3, 101, 1, '2024-12-10 10:00:00', 30, 'Surgery consultation', 20.0, 'SCHEDULED');
+
+-- Add treatments to completed visits
+INSERT INTO treatment (name, description, cost, visit_id)
+VALUES ('Blood Test', 'Complete blood count analysis', 45.00, 4);
+
+INSERT INTO treatment (name, description, cost, visit_id)
+VALUES ('Vaccination - Rabies', 'Annual rabies vaccination', 35.00, 4);
+
+INSERT INTO treatment (name, description, cost, visit_id)
+VALUES ('Skin Treatment', 'Topical anti-inflammatory application', 25.00, 5);
+
+INSERT INTO treatment (name, description, cost, visit_id)
+VALUES ('Dental Examination', 'Complete oral examination', 40.00, 6);
+
+-- Add medication prescriptions to completed visits
+INSERT INTO medication_prescription (visit_id, medication_id, batch_id, quantity_prescribed, dosage_instructions, duration)
+VALUES (4, 1, 1, 14, '1 tablet twice daily with food', '7 days');
+
+INSERT INTO medication_prescription (visit_id, medication_id, batch_id, quantity_prescribed, dosage_instructions, duration)
+VALUES (5, 2, 3, 10, '1 tablet once daily', '10 days');
+
+INSERT INTO medication_prescription (visit_id, medication_id, batch_id, quantity_prescribed, dosage_instructions, duration)
+VALUES (5, 3, 4, 15, '1 tablet in the morning', '15 days');
+
+INSERT INTO medication_prescription (visit_id, medication_id, batch_id, quantity_prescribed, dosage_instructions, duration)
+VALUES (6, 1, 2, 7, '1 tablet twice daily', '7 days');
+
+-- Add sample invoices for the completed visits
+INSERT INTO invoice (pet_owner_id, visit_id, invoice_date, total_amount, discount_amount, final_amount, status)
+VALUES (100, 4, '2024-09-15', 120.00, 6.00, 114.00, 'PAID');
+
+INSERT INTO invoice (pet_owner_id, visit_id, invoice_date, total_amount, discount_amount, final_amount, status)
+VALUES (100, 5, '2024-10-05', 95.00, 4.75, 90.25, 'PAID');
+
+INSERT INTO invoice (pet_owner_id, visit_id, invoice_date, total_amount, discount_amount, final_amount, status)
+VALUES (101, 6, '2024-10-20', 110.00, 11.00, 99.00, 'PAID');
+
+-- Add invoice items for visit 4
+INSERT INTO invoice_item (invoice_id, description, quantity, unit_price, item_total, item_type, reference_id)
+VALUES (2, 'Consultation - Vaccination follow-up', 2, 20.00, 40.00, 'VISIT', 4);
+
+INSERT INTO invoice_item (invoice_id, description, quantity, unit_price, item_total, item_type, reference_id)
+VALUES (2, 'Blood Test', 1, 45.00, 45.00, 'TREATMENT', 1);
+
+INSERT INTO invoice_item (invoice_id, description, quantity, unit_price, item_total, item_type, reference_id)
+VALUES (2, 'Vaccination - Rabies', 1, 35.00, 35.00, 'TREATMENT', 2);
+
+-- Add invoice items for visit 5
+INSERT INTO invoice_item (invoice_id, description, quantity, unit_price, item_total, item_type, reference_id)
+VALUES (3, 'Consultation - Skin allergy', 1, 20.00, 20.00, 'VISIT', 5);
+
+INSERT INTO invoice_item (invoice_id, description, quantity, unit_price, item_total, item_type, reference_id)
+VALUES (3, 'Skin Treatment', 1, 25.00, 25.00, 'TREATMENT', 3);
+
+INSERT INTO invoice_item (invoice_id, description, quantity, unit_price, item_total, item_type, reference_id)
+VALUES (3, 'Meloxicam 1.5mg', 10, 3.00, 30.00, 'MEDICATION', 2);
+
+INSERT INTO invoice_item (invoice_id, description, quantity, unit_price, item_total, item_type, reference_id)
+VALUES (3, 'Prednisolone 5mg', 15, 1.80, 27.00, 'MEDICATION', 3);
+
+-- Add invoice items for visit 6
+INSERT INTO invoice_item (invoice_id, description, quantity, unit_price, item_total, item_type, reference_id)
+VALUES (4, 'Consultation - Dental checkup', 2, 20.00, 40.00, 'VISIT', 6);
+
+INSERT INTO invoice_item (invoice_id, description, quantity, unit_price, item_total, item_type, reference_id)
+VALUES (4, 'Dental Examination', 1, 40.00, 40.00, 'TREATMENT', 4);
+
+INSERT INTO invoice_item (invoice_id, description, quantity, unit_price, item_total, item_type, reference_id)
+VALUES (4, 'Amoxicillin 250mg', 7, 2.50, 17.50, 'MEDICATION', 1);
+
+-- Add payments for the invoices
+INSERT INTO payment (invoice_id, payment_date, amount, payment_method, transaction_ref)
+VALUES (2, '2024-09-15', 114.00, 'Credit Card', 'TXN-20240915-001');
+
+INSERT INTO payment (invoice_id, payment_date, amount, payment_method, transaction_ref)
+VALUES (3, '2024-10-05', 90.25, 'Cash', 'TXN-20241005-001');
+
+INSERT INTO payment (invoice_id, payment_date, amount, payment_method, transaction_ref)
+VALUES (4, '2024-10-20', 99.00, 'Debit Card', 'TXN-20241020-001');

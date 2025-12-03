@@ -3,14 +3,17 @@ package vetclinic.application;
 import vetclinic.application.exceptions.*;
 import vetclinic.application.inputDTO.SellMedicationCommand;
 import vetclinic.application.mappers.InvoiceMapper;
+import vetclinic.application.outputDTO.DiscountUtilizationDTO;
+import vetclinic.application.outputDTO.InvoiceHistoryDTO;
 import vetclinic.application.outputDTO.InvoiceInformation;
 import vetclinic.domain.*;
 import vetclinic.persistence.*;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class InvoiceService {
@@ -35,6 +38,8 @@ public class InvoiceService {
         this.medicationBatchRepository = medicationBatchRepository;
         this.loyaltyTierRepository = loyaltyTierRepository;
     }
+
+    // UC 3.1: Generate Invoice from Visit
     @Transactional
     public Long generateInvoiceFromVisit(Long visitId) {
         Visit visit = visitRepository.findByIdWithDetails(visitId)
@@ -58,7 +63,7 @@ public class InvoiceService {
         // Add visit consultation fee
         InvoiceItem visitItem = new InvoiceItem();
         visitItem.setDescription("Consultation - " + visit.getReasonForVisit());
-        visitItem.setQuantity(visit.getDuration() / 15); // Number of 15-min blocks
+        visitItem.setQuantity(visit.getDuration() / 15);
         visitItem.setUnitPrice(visit.getPricePerBlock());
         visitItem.setItemType(InvoiceItemType.VISIT);
         visitItem.setReferenceId(visit.getVisitId());
@@ -100,6 +105,7 @@ public class InvoiceService {
         Invoice saved = invoiceRepository.save(invoice);
         return saved.getInvoiceId();
     }
+
     // UC 3.2: Sell Medication/Products (Non-Visit Sale)
     @Transactional
     public Long sellMedication(SellMedicationCommand command) {
@@ -180,7 +186,7 @@ public class InvoiceService {
 
         PetOwner petOwner = invoice.getPetOwner();
         if (petOwner == null) {
-            return; // No owner associated, no points
+            return;
         }
 
         // Calculate points: 1 point per 10€ spent
@@ -202,8 +208,32 @@ public class InvoiceService {
         return InvoiceMapper.toInformation(invoice);
     }
 
+    // UC 3.10: View Invoice History
+    @Transactional(readOnly = true)
+    public List<InvoiceHistoryDTO> getInvoiceHistory(Long petOwnerId, LocalDate startDate, LocalDate endDate) {
+        List<Invoice> invoices;
+
+        if (petOwnerId != null) {
+            invoices = invoiceRepository.findByPetOwnerAndDateRange(
+                    petOwnerId, startDate, endDate
+            );
+        } else {
+            invoices = invoiceRepository.findByDateRange(startDate, endDate);
+        }
+
+        return invoices.stream()
+                .map(this::mapToInvoiceHistory)
+                .collect(Collectors.toList());
+    }
+
+    // UC 3.12: Analyze Discount Utilization
+    @Transactional(readOnly = true)
+    public List<DiscountUtilizationDTO> analyzeDiscountUtilization(LocalDate startDate, LocalDate endDate) {
+        return invoiceRepository.findDiscountUtilization(startDate, endDate);
+    }
+
+    // Private helper methods
     private void updateLoyaltyTier(PetOwner petOwner) {
-        // Get all tiers ordered by required points desc
         List<LoyaltyTier> tiers = (List<LoyaltyTier>) loyaltyTierRepository.findAll();
 
         LoyaltyTier appropriateTier = tiers.stream()
@@ -216,5 +246,21 @@ public class InvoiceService {
                         !petOwner.getLoyaltyTier().equals(appropriateTier))) {
             petOwner.setLoyaltyTier(appropriateTier);
         }
+    }
+
+    private InvoiceHistoryDTO mapToInvoiceHistory(Invoice invoice) {
+        String ownerName = invoice.getPetOwner() != null ?
+                invoice.getPetOwner().getFirstName() + " " + invoice.getPetOwner().getLastName() :
+                "Unknown";
+
+        return new InvoiceHistoryDTO(
+                invoice.getInvoiceId(),
+                invoice.getInvoiceDate(),
+                ownerName,
+                invoice.getTotalAmount(),
+                invoice.getDiscountAmount(),
+                invoice.getFinalAmount(),
+                invoice.getStatus().name()
+        );
     }
 }
