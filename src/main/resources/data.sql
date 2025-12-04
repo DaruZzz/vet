@@ -193,3 +193,15 @@ VALUES (3, '2024-10-05', 90.25, 'Cash', 'TXN-20241005-001');
 
 INSERT INTO payment (invoice_id, payment_date, amount, payment_method, transaction_ref)
 VALUES (4, '2024-10-20', 99.00, 'Debit Card', 'TXN-20241020-001');
+
+-- Amoxicillin and Meloxicam should not be taken together (always incompatible)
+INSERT INTO medication_incompatibility (medication1_id, medication2_id, persisting_period_days)
+VALUES (1, 2, NULL);
+
+-- Meloxicam and Prednisolone - incompatible for 7 days after last dose
+INSERT INTO medication_incompatibility (medication1_id, medication2_id, persisting_period_days)
+VALUES (2, 3, 7);
+
+-- Prednisolone and Fenbendazole - incompatible for 14 days
+INSERT INTO medication_incompatibility (medication1_id, medication2_id, persisting_period_days)
+VALUES (3, 4, 14);

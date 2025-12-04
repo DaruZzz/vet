@@ -92,4 +92,12 @@ public class ApplicationLevelExceptionsHandler {
         pd.setProperty("timestamp", Instant.now());
         return pd;
     }
+    @ExceptionHandler(MedicationIncompatibilityNotFoundException.class)
+    @ResponseBody
+    public ProblemDetail handleMedicationIncompatibilityNotFoundException(MedicationIncompatibilityNotFoundException ex) {
+        ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+        pd.setTitle("Medication Incompatibility Not Found");
+        pd.setProperty("timestamp", Instant.now());
+        return pd;
+    }
 }

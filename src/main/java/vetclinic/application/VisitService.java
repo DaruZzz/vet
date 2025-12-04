@@ -27,6 +27,7 @@ public class VisitService {
     private final MedicationBatchRepository medicationBatchRepository;
     private final TreatmentRepository treatmentRepository;
     private final MedicationPrescriptionRepository medicationPrescriptionRepository;
+    private final MedicationIncompatibilityService medicationIncompatibilityService;
 
     public VisitService(VisitRepository visitRepository,
                         PetRepository petRepository,
@@ -35,7 +36,8 @@ public class VisitService {
                         MedicationRepository medicationRepository,
                         MedicationBatchRepository medicationBatchRepository,
                         TreatmentRepository treatmentRepository,
-                        MedicationPrescriptionRepository medicationPrescriptionRepository) {
+                        MedicationPrescriptionRepository medicationPrescriptionRepository,
+                        MedicationIncompatibilityService medicationIncompatibilityService) { // AÑADIR ESTO
         this.visitRepository = visitRepository;
         this.petRepository = petRepository;
         this.petOwnerRepository = petOwnerRepository;
@@ -44,6 +46,7 @@ public class VisitService {
         this.medicationBatchRepository = medicationBatchRepository;
         this.treatmentRepository = treatmentRepository;
         this.medicationPrescriptionRepository = medicationPrescriptionRepository;
+        this.medicationIncompatibilityService = medicationIncompatibilityService; // AÑADIR ESTO
     }
 
     // UC 1.1: Schedule New Visit
@@ -265,6 +268,29 @@ public class VisitService {
                 .orElseThrow(() -> new MedicationNotFoundException(
                         "Medication with id " + command.medicationId() + " not found"
                 ));
+
+        boolean hasIncompatibility = medicationIncompatibilityService.checkIncompatibility(
+                visit.getPet().getPetId(),
+                command.medicationId()
+        );
+
+        if (hasIncompatibility) {
+            var alerts = medicationIncompatibilityService.getIncompatibilityAlerts(
+                    visit.getPet().getPetId(),
+                    command.medicationId()
+            );
+
+            String alertMessages = alerts.stream()
+                    .map(alert -> String.format("Incompatible with %s: %s",
+                            alert.conflictingMedicationName(),
+                            alert.reason()))
+                    .reduce("", (a, b) -> a + "\n" + b);
+
+            throw new vetclinic.domain.exceptions.MedicationIncompatibilityException(
+                    "Cannot prescribe " + medication.getName() + " due to incompatibilities:\n" +
+                            alertMessages
+            );
+        }
 
         // Find earliest expiring batch with sufficient quantity
         List<MedicationBatch> batches = medicationBatchRepository

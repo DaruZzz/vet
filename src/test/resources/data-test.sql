@@ -22,6 +22,7 @@ DELETE FROM administrator;
 DELETE FROM person;
 DELETE FROM speciality;
 DELETE FROM pet_type;
+DELETE FROM medication_incompatibility;
 
 -- ============================================
 -- Reset sequences to start from 1
@@ -43,6 +44,7 @@ ALTER TABLE medication_prescription ALTER COLUMN prescription_id RESTART WITH 1;
 ALTER TABLE invoice ALTER COLUMN invoice_id RESTART WITH 1;
 ALTER TABLE invoice_item ALTER COLUMN item_id RESTART WITH 1;
 ALTER TABLE payment ALTER COLUMN payment_id RESTART WITH 1;
+ALTER TABLE medication_incompatibility ALTER COLUMN incompatibility_id RESTART WITH 1;
 
 -- ============================================
 -- Insert Test Data
@@ -211,3 +213,11 @@ VALUES (1, '2024-09-15', 114.00, 'Credit Card', 'TXN-TEST-001');
 
 INSERT INTO payment (invoice_id, payment_date, amount, payment_method, transaction_ref)
 VALUES (2, '2024-10-05', 85.50, 'Cash', 'TXN-TEST-002');
+
+-- Test Med 1 and Test Med 2 always incompatible
+INSERT INTO medication_incompatibility (medication1_id, medication2_id, persisting_period_days)
+VALUES (1, 2, NULL);
+
+-- Test Med 2 and Test Med 3 - incompatible for 5 days
+INSERT INTO medication_incompatibility (medication1_id, medication2_id, persisting_period_days)
+VALUES (2, 3, 5);

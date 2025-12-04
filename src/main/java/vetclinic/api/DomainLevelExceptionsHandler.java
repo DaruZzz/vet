@@ -65,4 +65,13 @@ public class DomainLevelExceptionsHandler {
         pd.setProperty("timestamp", Instant.now());
         return pd;
     }
+
+    @ExceptionHandler(MedicationIncompatibilityException.class)
+    @ResponseBody
+    public ProblemDetail handleMedicationIncompatibilityException(MedicationIncompatibilityException ex) {
+        ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+        pd.setTitle("Medication Incompatibility");
+        pd.setProperty("timestamp", Instant.now());
+        return pd;
+    }
 }

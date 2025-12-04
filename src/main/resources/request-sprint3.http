@@ -1,0 +1,131 @@
+### Sprint 3 - Medication Incompatibilities
+
+### UC 2.11 - Create Medication Incompatibility (Always incompatible)
+POST http://localhost:8080/api/medication-incompatibilities
+Content-Type: application/json
+
+{
+  "medication1Id": 1,
+  "medication2Id": 2,
+  "persistingPeriodDays": null
+}
+
+###
+# Create incompatibility with persisting period (7 days)
+POST http://localhost:8080/api/medication-incompatibilities
+Content-Type: application/json
+
+{
+  "medication1Id": 2,
+  "medication2Id": 3,
+  "persistingPeriodDays": 7
+}
+
+### UC 2.11 - Get all incompatibilities
+GET http://localhost:8080/api/medication-incompatibilities
+
+### UC 2.11 - Get incompatibilities for specific medication
+GET http://localhost:8080/api/medication-incompatibilities/medication/1
+
+### UC 2.11 - Update incompatibility
+PUT http://localhost:8080/api/medication-incompatibilities/1
+Content-Type: application/json
+
+{
+  "persistingPeriodDays": 14
+}
+
+### UC 2.11 - Delete incompatibility
+DELETE http://localhost:8080/api/medication-incompatibilities/1
+
+### UC 2.12 - Check incompatibility (POST)
+POST http://localhost:8080/api/medication-incompatibilities/check
+Content-Type: application/json
+
+{
+  "petId": 1,
+  "medicationId": 2
+}
+
+### UC 2.12 - Check incompatibility (GET)
+GET http://localhost:8080/api/medication-incompatibilities/check?petId=1&medicationId=2
+
+### Test complete workflow:
+
+### 1. Create an incompatibility
+POST http://localhost:8080/api/medication-incompatibilities
+Content-Type: application/json
+
+{
+  "medication1Id": 1,
+  "medication2Id": 2,
+  "persistingPeriodDays": null
+}
+
+### 2. Try to prescribe incompatible medication (should fail)
+POST http://localhost:8080/api/visits/1/prescriptions
+Content-Type: application/json
+
+{
+  "medicationId": 2,
+  "quantityPrescribed": 10,
+  "dosageInstructions": "1 tablet twice daily",
+  "duration": "10 days"
+}
+
+### 3. Check incompatibility first
+GET http://localhost:8080/api/medication-incompatibilities/check?petId=1&medicationId=2
+
+### 4. List all incompatibilities for medication 1
+GET http://localhost:8080/api/medication-incompatibilities/medication/1
+
+### Test with persisting period:
+
+### 1. Create incompatibility with 5-day persisting period
+POST http://localhost:8080/api/medication-incompatibilities
+Content-Type: application/json
+
+{
+  "medication1Id": 3,
+  "medication2Id": 4,
+  "persistingPeriodDays": 5
+}
+
+### 2. Prescribe medication 3 to pet 2
+POST http://localhost:8080/api/visits/2/prescriptions
+Content-Type: application/json
+
+{
+  "medicationId": 3,
+  "quantityPrescribed": 15,
+  "dosageInstructions": "1 tablet daily",
+  "duration": "15 days"
+}
+
+### 3. Check if medication 4 is compatible (should fail if within 5 days)
+GET http://localhost:8080/api/medication-incompatibilities/check?petId=2&medicationId=4
+
+### Error cases:
+
+### Try to create incompatibility with same medication (should fail)
+POST http://localhost:8080/api/medication-incompatibilities
+Content-Type: application/json
+
+{
+  "medication1Id": 1,
+  "medication2Id": 1,
+  "persistingPeriodDays": null
+}
+
+### Try to create duplicate incompatibility (should fail)
+POST http://localhost:8080/api/medication-incompatibilities
+Content-Type: application/json
+
+{
+  "medication1Id": 1,
+  "medication2Id": 2,
+  "persistingPeriodDays": null
+}
+
+### Try to get incompatibilities for non-existent medication (should fail)
+GET http://localhost:8080/api/medication-incompatibilities/medication/999
