@@ -13,13 +13,13 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @Transactional
-public class PetServiceTest {
+@Sql(scripts = "classpath:data-test.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+class PetServiceTest {
 
     @Autowired
     private PetService petService;
 
     @Test
-    @Sql(scripts = "classpath:data-test.sql")
     public void testGetPetMedicalHistory() {
         PetMedicalHistoryDTO history = petService.getPetMedicalHistory(1L);
 
@@ -27,29 +27,35 @@ public class PetServiceTest {
         assertEquals(1L, history.petId());
         assertEquals("TestDog", history.petName());
         assertNotNull(history.medicalHistory());
+
+        // From data-test.sql, TestDog should have 2 completed visits
+        assertTrue(history.medicalHistory().size() >= 2);
     }
 
     @Test
-    @Sql(scripts = "classpath:data-test.sql")
     public void testGetPetMedicalHistoryNotFound() {
-        assertThrows(PetNotFoundException.class, () -> {
-            petService.getPetMedicalHistory(999L);
-        });
+        assertThrows(PetNotFoundException.class, () ->
+                petService.getPetMedicalHistory(999L)
+        );
     }
 
     @Test
-    @Sql(scripts = "classpath:data-test.sql")
     public void testMedicalHistoryIsSorted() {
         PetMedicalHistoryDTO history = petService.getPetMedicalHistory(1L);
 
         assertNotNull(history);
+
         if (history.medicalHistory().size() > 1) {
-            // Verify most recent first
             for (int i = 0; i < history.medicalHistory().size() - 1; i++) {
                 var current = history.medicalHistory().get(i);
                 var next = history.medicalHistory().get(i + 1);
-                assertTrue(current.dateTime().isAfter(next.dateTime()) ||
-                        current.dateTime().isEqual(next.dateTime()));
+
+                // Most recent should be first
+                assertTrue(
+                        current.dateTime().isAfter(next.dateTime()) ||
+                                current.dateTime().isEqual(next.dateTime()),
+                        "Medical history should be sorted with most recent first"
+                );
             }
         }
     }

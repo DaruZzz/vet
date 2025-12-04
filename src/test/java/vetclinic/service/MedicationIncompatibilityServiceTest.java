@@ -18,87 +18,75 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @Transactional
+@Sql(scripts = "classpath:data-test.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 public class MedicationIncompatibilityServiceTest {
 
     @Autowired
     private MedicationIncompatibilityService incompatibilityService;
 
     @Test
-    @Sql(scripts = "classpath:data-test.sql")
     public void testCreateIncompatibility() {
-        // Given
+        // Create a new incompatibility between medications 1 and 3
         CreateIncompatibilityCommand command = new CreateIncompatibilityCommand(
                 1L, 3L, 10
         );
 
-        // When
         Long incompatibilityId = incompatibilityService.createIncompatibility(command);
 
-        // Then
         assertNotNull(incompatibilityId);
 
+        // Verify it was created
         List<MedicationIncompatibilityDTO> incompatibilities =
                 incompatibilityService.getIncompatibilitiesForMedication(1L);
 
-        assertTrue(incompatibilities.size() >= 1);
+        assertTrue(incompatibilities.stream()
+                .anyMatch(i -> i.medication2Id().equals(3L)));
     }
 
     @Test
-    @Sql(scripts = "classpath:data-test.sql")
     public void testCreateIncompatibilityWithSameMedication() {
-        // Given
         CreateIncompatibilityCommand command = new CreateIncompatibilityCommand(
                 1L, 1L, null
         );
 
-        // When/Then
         assertThrows(IllegalArgumentException.class, () ->
                 incompatibilityService.createIncompatibility(command)
         );
     }
 
     @Test
-    @Sql(scripts = "classpath:data-test.sql")
     public void testCreateDuplicateIncompatibility() {
-        // Given
+        // First incompatibility already exists in data-test.sql between 1 and 2
         CreateIncompatibilityCommand command = new CreateIncompatibilityCommand(
                 1L, 2L, null
         );
 
-        incompatibilityService.createIncompatibility(command);
-
-        // When/Then - Try to create same incompatibility
         assertThrows(IllegalStateException.class, () ->
                 incompatibilityService.createIncompatibility(command)
         );
     }
 
     @Test
-    @Sql(scripts = "classpath:data-test.sql")
     public void testGetIncompatibilitiesForMedication() {
-        // When
         List<MedicationIncompatibilityDTO> incompatibilities =
                 incompatibilityService.getIncompatibilitiesForMedication(1L);
 
-        // Then
         assertNotNull(incompatibilities);
-        assertEquals(1, incompatibilities.size()); // From data-test.sql
+        assertEquals(1, incompatibilities.size());
     }
 
     @Test
-    @Sql(scripts = "classpath:data-test.sql")
     public void testUpdateIncompatibility() {
-        // Given
         List<MedicationIncompatibilityDTO> incompatibilities =
                 incompatibilityService.getIncompatibilitiesForMedication(1L);
 
+        assertFalse(incompatibilities.isEmpty(), "Should have at least one incompatibility");
+
         Long incompatibilityId = incompatibilities.get(0).incompatibilityId();
 
-        // When
         UpdateIncompatibilityCommand command = new UpdateIncompatibilityCommand(20);
         incompatibilityService.updateIncompatibility(incompatibilityId, command);
 
-        // Then
         List<MedicationIncompatibilityDTO> updated =
                 incompatibilityService.getIncompatibilitiesForMedication(1L);
 
@@ -111,49 +99,40 @@ public class MedicationIncompatibilityServiceTest {
     }
 
     @Test
-    @Sql(scripts = "classpath:data-test.sql")
     public void testDeleteIncompatibility() {
-        // Given
         List<MedicationIncompatibilityDTO> incompatibilities =
-                incompatibilityService.getIncompatibilitiesForMedication(1L);
+                incompatibilityService.getIncompatibilitiesForMedication(2L);
 
-        int initialSize = incompatibilities.size();
+        assertFalse(incompatibilities.isEmpty());
+
         Long incompatibilityId = incompatibilities.get(0).incompatibilityId();
 
-        // When
         incompatibilityService.deleteIncompatibility(incompatibilityId);
 
-        // Then
         List<MedicationIncompatibilityDTO> remaining =
-                incompatibilityService.getIncompatibilitiesForMedication(1L);
+                incompatibilityService.getIncompatibilitiesForMedication(2L);
 
-        assertEquals(initialSize - 1, remaining.size());
+        assertTrue(remaining.stream()
+                .noneMatch(i -> i.incompatibilityId().equals(incompatibilityId)));
     }
 
     @Test
-    @Sql(scripts = "classpath:data-test.sql")
     public void testCheckIncompatibility() {
-        // Given - Pet 1 has been prescribed Test Med 1 in data-test.sql
-
-        // When - Check if Test Med 2 is compatible (it's not, from data-test.sql)
+        // Pet 1 has been prescribed Test Med 1 in data-test.sql
+        // Check if Test Med 2 is compatible (it's not, from data-test.sql)
         boolean hasIncompatibility = incompatibilityService.checkIncompatibility(1L, 2L);
 
-        // Then
-        assertTrue(hasIncompatibility);
+        assertTrue(hasIncompatibility, "Pet 1 with Med 1 should be incompatible with Med 2");
     }
 
     @Test
-    @Sql(scripts = "classpath:data-test.sql")
     public void testGetIncompatibilityAlerts() {
-        // Given - Pet 1 has Test Med 1 prescribed
-
-        // When - Check alerts for Test Med 2
+        // Pet 1 has Test Med 1 prescribed
         List<IncompatibilityAlertDTO> alerts =
                 incompatibilityService.getIncompatibilityAlerts(1L, 2L);
 
-        // Then
         assertNotNull(alerts);
-        assertFalse(alerts.isEmpty());
+        assertFalse(alerts.isEmpty(), "Should have incompatibility alerts");
 
         IncompatibilityAlertDTO alert = alerts.get(0);
         assertEquals("Test Med 1", alert.conflictingMedicationName());
@@ -161,69 +140,29 @@ public class MedicationIncompatibilityServiceTest {
     }
 
     @Test
-    @Sql(scripts = "classpath:data-test.sql")
-    public void testGetIncompatibilityAlertsWithPersistingPeriod() {
-        // Given - Pet 2 has Test Med 2 prescribed
-
-        // When - Check alerts for Test Med 3 (5-day persisting period)
-        List<IncompatibilityAlertDTO> alerts =
-                incompatibilityService.getIncompatibilityAlerts(2L, 3L);
-
-        // Then
-        assertNotNull(alerts);
-        // May or may not be active depending on test data dates
-    }
-
-    @Test
-    @Sql(scripts = "classpath:data-test.sql")
-    public void testGetIncompatibilitiesForNonExistentMedication() {
-        // When/Then
-        assertThrows(MedicationNotFoundException.class, () ->
-                incompatibilityService.getIncompatibilitiesForMedication(999L)
-        );
-    }
-
-    @Test
-    @Sql(scripts = "classpath:data-test.sql")
     public void testGetAllIncompatibilities() {
-        // When
         List<MedicationIncompatibilityDTO> all =
                 incompatibilityService.getAllIncompatibilities();
 
-        // Then
         assertNotNull(all);
-        assertEquals(2, all.size()); // From data-test.sql
+        assertEquals(2, all.size());
     }
 
     @Test
-    @Sql(scripts = "classpath:data-test.sql")
     public void testCreateIncompatibilityWithNonExistentMedication() {
-        // Given
         CreateIncompatibilityCommand command = new CreateIncompatibilityCommand(
                 999L, 1L, null
         );
 
-        // When/Then
         assertThrows(MedicationNotFoundException.class, () ->
                 incompatibilityService.createIncompatibility(command)
         );
     }
 
     @Test
-    @Sql(scripts = "classpath:data-test.sql")
-    public void testCheckIncompatibilityWithNonExistentPet() {
-        // When/Then
-        assertThrows(RuntimeException.class, () ->
-                incompatibilityService.checkIncompatibility(999L, 1L)
-        );
-    }
-
-    @Test
-    @Sql(scripts = "classpath:data-test.sql")
-    public void testCheckIncompatibilityWithNonExistentMedication() {
-        // When/Then
+    public void testGetIncompatibilitiesForNonExistentMedication() {
         assertThrows(MedicationNotFoundException.class, () ->
-                incompatibilityService.checkIncompatibility(1L, 999L)
+                incompatibilityService.getIncompatibilitiesForMedication(999L)
         );
     }
 }

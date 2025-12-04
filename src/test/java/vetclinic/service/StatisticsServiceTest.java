@@ -15,13 +15,13 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @Transactional
-public class StatisticsServiceTest {
+@Sql(scripts = "classpath:data-test.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+class StatisticsServiceTest {
 
     @Autowired
     private StatisticsService statisticsService;
 
     @Test
-    @Sql(scripts = "classpath:data-test.sql")
     public void testGetSpecialitiesByDemand() {
         LocalDate startDate = LocalDate.of(2024, 1, 1);
         LocalDate endDate = LocalDate.of(2024, 12, 31);
@@ -30,11 +30,21 @@ public class StatisticsServiceTest {
                 statisticsService.getSpecialitiesByDemand(startDate, endDate);
 
         assertNotNull(result);
-        // Should have at least some specialities with scheduled visits
+        // Should have specialities from scheduled visits
+        assertFalse(result.isEmpty());
+
+        // Check that results are ordered by demand (descending)
+        if (result.size() > 1) {
+            for (int i = 0; i < result.size() - 1; i++) {
+                assertTrue(
+                        result.get(i).visitCount() >= result.get(i + 1).visitCount(),
+                        "Results should be ordered by visit count descending"
+                );
+            }
+        }
     }
 
     @Test
-    @Sql(scripts = "classpath:data-test.sql")
     public void testGetVeterinariansByDemand() {
         LocalDate startDate = LocalDate.of(2024, 1, 1);
         LocalDate endDate = LocalDate.of(2024, 12, 31);
@@ -43,11 +53,15 @@ public class StatisticsServiceTest {
                 statisticsService.getVeterinariansByDemand(startDate, endDate);
 
         assertNotNull(result);
-        // Should have veterinarians with scheduled visits
+        assertFalse(result.isEmpty());
+
+        // Verify veterinarians have scheduled visits
+        result.forEach(vet -> {
+            assertTrue(vet.visitCount() > 0);
+        });
     }
 
     @Test
-    @Sql(scripts = "classpath:data-test.sql")
     public void testGetMedicationsByPrescription() {
         LocalDate startDate = LocalDate.of(2024, 1, 1);
         LocalDate endDate = LocalDate.of(2024, 12, 31);
@@ -56,19 +70,50 @@ public class StatisticsServiceTest {
                 statisticsService.getMedicationsByPrescription(startDate, endDate);
 
         assertNotNull(result);
+        // From data-test.sql, we have 3 prescriptions
+        assertEquals(3, result.size());
+
+        // Check ordering
+        if (result.size() > 1) {
+            for (int i = 0; i < result.size() - 1; i++) {
+                assertTrue(
+                        result.get(i).prescriptionCount() >= result.get(i + 1).prescriptionCount()
+                );
+            }
+        }
     }
 
     @Test
-    @Sql(scripts = "classpath:data-test.sql")
     public void testGetVeterinariansByMedicationPrescription() {
         LocalDate startDate = LocalDate.of(2024, 1, 1);
         LocalDate endDate = LocalDate.of(2024, 12, 31);
 
+        // Query for Test Med 1 (medication ID 1)
         List<VeterinarianPrescriptionStatsDTO> result =
                 statisticsService.getVeterinariansByMedicationPrescription(
                         1L, startDate, endDate
                 );
 
         assertNotNull(result);
+        // Test Med 1 is prescribed by Vet 1 in data-test.sql
+        assertFalse(result.isEmpty());
+
+        result.forEach(vet -> {
+            assertTrue(vet.prescriptionCount() > 0);
+        });
+    }
+
+    @Test
+    public void testEmptyPeriod() {
+        // Query for a period with no data
+        LocalDate startDate = LocalDate.of(2023, 1, 1);
+        LocalDate endDate = LocalDate.of(2023, 1, 31);
+
+        List<SpecialityDemandDTO> result =
+                statisticsService.getSpecialitiesByDemand(startDate, endDate);
+
+        assertNotNull(result);
+        // Should return empty list for period with no visits
+        assertTrue(result.isEmpty());
     }
 }

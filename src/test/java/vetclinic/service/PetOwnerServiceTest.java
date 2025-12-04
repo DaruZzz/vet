@@ -13,35 +13,34 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @Transactional
-public class PetOwnerServiceTest {
+@Sql(scripts = "classpath:data-test.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+class PetOwnerServiceTest {
 
     @Autowired
     private PetOwnerService petOwnerService;
 
     @Test
-    @Sql(scripts = "classpath:data-test.sql")
     public void testGetFidelityPointsBalance() {
         FidelityPointsBalanceDTO balance =
                 petOwnerService.getFidelityPointsBalance(100L);
 
         assertNotNull(balance);
         assertEquals(100L, balance.petOwnerId());
-        assertNotNull(balance.currentPoints());
-        assertNotNull(balance.currentTier());
+        assertEquals(50, balance.currentPoints());
+        assertEquals("Bronze", balance.currentTier());
     }
 
     @Test
-    @Sql(scripts = "classpath:data-test.sql")
     public void testGetFidelityPointsBalanceNotFound() {
-        assertThrows(PetOwnerNotFoundException.class, () -> {
-            petOwnerService.getFidelityPointsBalance(999L);
-        });
+        assertThrows(PetOwnerNotFoundException.class, () ->
+                petOwnerService.getFidelityPointsBalance(999L)
+        );
     }
 
     @Test
-    @Sql(scripts = "classpath:data-test.sql")
     public void testFidelityPointsBalanceWithNextTier() {
-        // Pet owner 100 has 50 points (Bronze tier)
+        // Pet owner 100 has 50 points (Bronze tier, requires 0)
+        // Next tier is Silver (requires 100)
         FidelityPointsBalanceDTO balance =
                 petOwnerService.getFidelityPointsBalance(100L);
 
@@ -49,18 +48,19 @@ public class PetOwnerServiceTest {
         assertEquals("Bronze", balance.currentTier());
         assertEquals("Silver", balance.nextTier());
         assertNotNull(balance.pointsToNextTier());
-        assertTrue(balance.pointsToNextTier() > 0);
+        assertEquals(50, balance.pointsToNextTier()); // 100 - 50 = 50
     }
 
     @Test
-    @Sql(scripts = "classpath:data-test.sql")
     public void testFidelityPointsBalanceHighTier() {
         // Pet owner 101 has 150 points (Silver tier)
         FidelityPointsBalanceDTO balance =
                 petOwnerService.getFidelityPointsBalance(101L);
 
         assertNotNull(balance);
+        assertEquals(150, balance.currentPoints());
         assertEquals("Silver", balance.currentTier());
         assertEquals("Gold", balance.nextTier());
+        assertEquals(100, balance.pointsToNextTier()); // 250 - 150 = 100
     }
 }

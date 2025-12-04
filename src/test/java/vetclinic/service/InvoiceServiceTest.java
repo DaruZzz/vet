@@ -15,13 +15,13 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @Transactional
-public class InvoiceServiceTest {
+@Sql(scripts = "classpath:data-test.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+class InvoiceServiceTest {
 
     @Autowired
     private InvoiceService invoiceService;
 
     @Test
-    @Sql(scripts = "classpath:data-test.sql")
     public void testGetInvoiceHistory() {
         LocalDate startDate = LocalDate.of(2024, 1, 1);
         LocalDate endDate = LocalDate.of(2024, 12, 31);
@@ -30,10 +30,11 @@ public class InvoiceServiceTest {
                 invoiceService.getInvoiceHistory(null, startDate, endDate);
 
         assertNotNull(history);
+        // From data-test.sql, should have 3 invoices
+        assertEquals(3, history.size());
     }
 
     @Test
-    @Sql(scripts = "classpath:data-test.sql")
     public void testGetInvoiceHistoryForSpecificOwner() {
         LocalDate startDate = LocalDate.of(2024, 1, 1);
         LocalDate endDate = LocalDate.of(2024, 12, 31);
@@ -42,15 +43,15 @@ public class InvoiceServiceTest {
                 invoiceService.getInvoiceHistory(100L, startDate, endDate);
 
         assertNotNull(history);
-        // All invoices should belong to owner 100
+        // Pet owner 100 has 2 invoices
+        assertEquals(2, history.size());
+
         history.forEach(invoice -> {
-            // Verify the owner name matches
-            assertNotNull(invoice.petOwnerName());
+            assertTrue(invoice.petOwnerName().contains("Test"));
         });
     }
 
     @Test
-    @Sql(scripts = "classpath:data-test.sql")
     public void testAnalyzeDiscountUtilization() {
         LocalDate startDate = LocalDate.of(2024, 1, 1);
         LocalDate endDate = LocalDate.of(2024, 12, 31);
@@ -59,5 +60,7 @@ public class InvoiceServiceTest {
                 invoiceService.analyzeDiscountUtilization(startDate, endDate);
 
         assertNotNull(utilization);
+        // Should have at least the test discount
+        assertFalse(utilization.isEmpty());
     }
 }
